@@ -18,3 +18,6 @@ optional arguments:<br>
   --sep-max SEP_MAX_KPC<br>
                         Maximum projected separation (kpc)<br>
   --out OUT             Output file name (CSV) default: galaxies.csv<br>
+
+Example:
+	python get_galaxies.py --ra 219.51950000 --dec -60.34800000 --r 3. --out my_galaxies.csv --dist-max 100
