@@ -267,10 +267,6 @@ if __name__ == "__main__":
                                   rad=args.rad, catalog=args.catalog)
         if galaxies is not None:
             galaxies = galaxies[0]
-#        print("Un-recognized catalog.")
-#        print("Available catalogs:")
-#        print("VII/281/glade2")
-#        print("VII/259/6dfgs")
 
     if galaxies is None:
         print("No galaxies found with the given search parameters.")
