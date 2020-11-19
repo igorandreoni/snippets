@@ -1,3 +1,6 @@
+# Author: Igor Andreoni
+# email: andreoni@caltech.edu
+
 import glob
 
 from astropy.io import fits

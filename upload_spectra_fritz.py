@@ -1,3 +1,6 @@
+# Author: Igor Andreoni
+# email: andreoni@caltech.edu
+
 import requests
 import glob
 import re
