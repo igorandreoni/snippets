@@ -19,8 +19,10 @@ optional arguments:<br>
 Example:
 
 ```
-python dbsp_crop_spec.py --n ZTF19cool.fits ZTF20lesscool.fits --suffix _cropped.txt --doPlot
+python dbsp_crop_spec.py --n ZTF19cool.fits ZTF20lesscool.fits --doPlot
 ```
+
+Limitations: Headers are not yet transferred
 
 ### Get galaxies
 usage: get_galaxies.py [-h] --ra RA --dec DEC [--r RAD] [--dist-min DIST_MIN]<br>
