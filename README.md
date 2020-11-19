@@ -1,4 +1,4 @@
-Collection of useful astronomy snippets
+Collection of useful astronomy snippets. All work with Python 3.
 
 ## Crop and display DBSP spectra
 usage: dbsp_crop_spec.py [-h] [--doPlot] [-n NAMES [NAMES ...]] <br>
@@ -44,7 +44,7 @@ optional arguments:<br>
 
 **Notes:**
 * If the name of the ZTF source is in the filename, it will be recognized automatically; filenames without the ZTF source name are fine, too
-* Make sure that 'ZTF' appears only once in the filename, if any
+* Make sure that 'ZTF' appears only once at most in the filename
 * The spectra are assumed to have wavelength in the first column (in angstrom), flux in the second column, possibly flux error in the third column
 * Please update your API before using the code. You can find the API code in your Fritz account page
 
