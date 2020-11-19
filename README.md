@@ -1,6 +1,27 @@
 # snippets
 Collection of useful astronomy snippets
 
+### Crop and display DBSP spectra
+usage: dbsp_crop_spec.py [-h] [--doPlot] [-n NAMES [NAMES ...]] <br>
+                         [--suffix OUT_SUFFIX]<br>
+<br>
+Crop DBSP spectra, prepare them for upload on Fritz, and plot them up. If no<br>
+option is given, all spectra in the format ./ZTF\*.fits will be processed<br>
+<br>
+optional arguments:<br>
+  -h, --help            show this help message and exit<br>
+  --doPlot              Plot up the spectra<br>
+  -n NAMES [NAMES ...]<br>
+                        Names of the spectra; if not provided, all spectra in <br>
+                        the format ./ZTF\*.fits will be processed <br>
+  --suffix OUT_SUFFIX   suffix for the output; default = '_crop.txt' <br>
+
+Example:
+
+```
+python dbsp_crop_spec.py --n ZTF19cool.fits ZTF20lesscool.fits --suffix _cropped.txt --doPlot
+```
+
 ### Get galaxies
 usage: get_galaxies.py [-h] --ra RA --dec DEC [--r RAD] [--dist-min DIST_MIN]<br>
                        [--dist-max DIST_MAX] [--sep-max SEP_MAX_KPC]<br>
