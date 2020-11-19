@@ -46,6 +46,7 @@ optional arguments:<br>
 * If the name of the ZTF source is in the filename, it will be recognized automatically; filenames without the ZTF source name are fine, too
 * Make sure that 'ZTF' appears only once at most in the filename
 * The spectra are assumed to have wavelength in the first column (in angstrom), flux in the second column, possibly flux error in the third column
+* Specifying the group IDs may not be necessary
 * Please update your API before using the code. You can find the API code in your Fritz account page
 
 **Useful links:**
