@@ -1,6 +1,3 @@
-# Author: Igor Andreoni
-# email: andreoni@caltech.edu
-
 import requests
 import glob
 import re
@@ -25,7 +22,7 @@ def api(method, endpoint, data=None):
 
 
 def upload_spectrum(spec, observers, reducers, group_ids=[], date=None,
-                    inst_id=3, ztfid=None):
+                    inst_id=3, ztfid=None, meta=None):
     """
     Upload a spectrum to the Fritz marshal
 
@@ -52,7 +49,7 @@ def upload_spectrum(spec, observers, reducers, group_ids=[], date=None,
             "observed_by": observers,
             "group_ids": group_ids,
 #            "assignment_id": 0,
-            "altdata": "Reduced with the DBSP_DRP pipeline ",
+            "altdata": meta,
             "observed_at": str(date),
             "fluxes": list(spec['flux']),
             "errors": list(spec['fluxerr']),
@@ -82,7 +79,7 @@ if __name__ == "__main__":
                         help='Use default reducer ID and observer - \
 please customize the code')
     parser.add_argument('--date', dest='date', type=str,
-                        required=False, help='Date of the observations, \
+                        required=True, help='Date of the observations, \
 e.g. 2020-11-10T00:00:00', default='2020-11-11T00:00:00')
     parser.add_argument('--inst', dest='inst_id', type=int,
                         required=False, help='Instrument ID, \
@@ -123,8 +120,15 @@ please enter the name of an ascii file")
         spec = ascii.read(filename)
         spec.rename_column("col1", "wavelength")
         spec.rename_column("col2", "flux")
-        if len(spec.colnames) > 2:
+        # Uncertainty for DBSP
+        if len(spec.colnames) > 2 and args.inst_id == 3:
             spec.rename_column("col3", "fluxerr")
+        elif len(spec.colnames) > 2 and args.inst_id == 7:
+            spec.rename_column("col4", "fluxerr")
+        elif len(spec.colnames) == 2:
+            spec["fluxerr"] = np.zeros(len(spec))
+        # Metadata
+        meta = spec._meta['comments']
         # Extract the source filename
         if not "ZTF" in source_filename:
             source = input(f"No 'ZTF' found in the file name, please enter \
@@ -134,4 +138,4 @@ the name of the source for the spectrum {source_filename}:\n")
             source = source_filename[span[0]:span[0]+12]
         print(f"Uploading spectrum {source_filename} for source {source}")
         upload_spectrum(spec, observers, reducers, group_ids=[], date=args.date,
-                    inst_id=args.inst_id, ztfid=source)
+                    inst_id=args.inst_id, ztfid=source, meta=meta)
