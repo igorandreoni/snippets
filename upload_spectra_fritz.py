@@ -1,7 +1,7 @@
 import requests
 import glob
 import re
-
+import numpy as np
 from astropy.io import ascii
 
 # Copy the API token from your Fritz account
@@ -44,17 +44,20 @@ def upload_spectrum(spec, observers, reducers, group_ids=[], date=None,
     ztfid str
         ID of the ZTF source, e.g. ZTF20aclnxgz
     """
-
+    #Get rid of NaNs in lpipe output since fritz does not like NaNs
+    good_rows = ~np.isnan(spec['flux'])
+    usespec = spec[good_rows]
+    
     data = {
             "observed_by": observers,
             "group_ids": group_ids,
 #            "assignment_id": 0,
             "altdata": meta,
             "observed_at": str(date),
-            "fluxes": list(spec['flux']),
-            "errors": list(spec['fluxerr']),
+            "fluxes": list(usespec['flux']),
+            "errors": list(usespec['fluxerr']),
 #            "followup_request_id": 0,
-            "wavelengths": list(spec['wavelength']),
+            "wavelengths": list(usespec['wavelength']),
             "instrument_id": inst_id,
             "reduced_by": reducers,
             "origin": "",
@@ -82,8 +85,8 @@ please customize the code')
                         required=True, help='Date of the observations, \
 e.g. 2020-11-10T00:00:00', default='2020-11-11T00:00:00')
     parser.add_argument('--inst', dest='inst_id', type=int,
-                        required=False, help='Instrument ID, \
-e.g. inst_id = 3 for DBSP. Instrument IDs can be found here: \
+                        required=True, help='Instrument ID, \
+e.g. inst_id = 3 for DBSP, inst_id = 7 for LRIS. Instrument IDs can be found here: \
 https://fritz.science/api/instrument', default=3)
     args = parser.parse_args()
 
