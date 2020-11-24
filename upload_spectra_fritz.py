@@ -21,6 +21,43 @@ def api(method, endpoint, data=None):
     return response
 
 
+def str2bool(v):
+    if v.lower() in ('yes', 'true', 't', 'y', '1', 'Yes', 'True'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0', 'No', 'False'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
+def check_source_exists(source):
+    """check if the source exists"""
+
+    response = api('HEAD', f'https://fritz.science/api/sources/{source}')
+
+    if response.status_code == 200:
+        print(f"Source {source} was found on Fritz")
+    else:
+        print(f"Source {source} does not exist on Fritz!!")
+
+    return response
+
+
+def get_groups(source):
+    """Get the groups a source belongs to"""
+
+    response = api('GET',
+                   f'https://fritz.science/api/sources/{source}'
+                   )
+
+    if response.status_code == 200:
+        groups = response.json()['data']['groups']
+    else:
+        print(f'HTTP code: {response.status_code}, {response.reason}')
+
+    return groups
+
+
 def upload_spectrum(spec, observers, reducers, group_ids=[], date=None,
                     inst_id=3, ztfid=None, meta=None):
     """
@@ -131,7 +168,12 @@ please enter the name of an ascii file")
         elif len(spec.colnames) == 2:
             spec["fluxerr"] = np.zeros(len(spec))
         # Metadata
-        meta = spec._meta['comments']
+        # For LRIS:
+        if args.inst_id == 7:
+            meta = spec._meta['comments']
+        # other instruments:
+        else:
+            meta = spec._meta
         # Extract the source filename
         if not "ZTF" in source_filename:
             source = input(f"No 'ZTF' found in the file name, please enter \
@@ -139,6 +181,28 @@ the name of the source for the spectrum {source_filename}:\n")
         else:
             span = re.search("ZTF", source_filename).span()
             source = source_filename[span[0]:span[0]+12]
-        print(f"Uploading spectrum {source_filename} for source {source}")
-        upload_spectrum(spec, observers, reducers, group_ids=[], date=args.date,
-                    inst_id=args.inst_id, ztfid=source, meta=meta)
+        response = check_source_exists(source)
+        if response.status_code != 200:
+            print(f"Skipping {source}...")
+            continue
+
+        groups = get_groups(source)
+        group_ids = []
+        if len(groups) == 0:
+            print("{source} is not saved in any group")
+        else:
+            print("{source} was saved in the following groups:")
+        for g in groups:
+            print(f"{g['id']}, {g['name']}")
+            group_ids.append(g['id'])
+        print(f"The spectrum will be sent to groups {group_ids}")
+        ok_groups = str2bool(input("Are you happy with that?\n") or 'y')
+        if ok_groups is False:
+            group_ids = input("Please enter comma-separated group IDs (int)\n")
+            group_ids = group_ids.split(",")
+            group_ids = [int(g) for g in group_ids]
+        print(f"Uploading spectrum {source_filename} for source {source} \
+to group IDs {group_ids}")
+        upload_spectrum(spec, observers, reducers, group_ids=group_ids,
+                        date=args.date, inst_id=args.inst_id,
+                        ztfid=source, meta=meta)
