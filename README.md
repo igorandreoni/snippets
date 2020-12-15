@@ -62,25 +62,41 @@ python upload_spectra_fritz.py ZTF*txt --inst 3 --date 2020-10-28T07:00:00
 ```
 
 ## Get galaxies
-usage: get_galaxies.py [-h] --ra RA --dec DEC [--r RAD] [--dist-min DIST_MIN]<br>
-                       [--dist-max DIST_MAX] [--sep-max SEP_MAX_KPC]<br>
-                       [--out OUT]<br>
+usage: get_galaxies.py [-h] --ra RA --dec DEC [--r RAD] [--c CATALOG]<br>
+                       [--dist-min DIST_MIN] [--dist-max DIST_MAX]<br>
+                       [--sep-max SEP_MAX_KPC] [--out OUT]<br>
 <br>
-Query the GLADE catalog (Dalya et al., 2018) to find galaxies around given coordinates<br>
+Query galaxy catalogs<br>
 <br>
 optional arguments:<br>
   -h, --help            show this help message and exit<br>
   --ra RA               Right Ascension of the center of the query (deg)<br>
   --dec DEC             Declination of the center of the query (deg)<br>
   --r RAD               Radius of the query (deg), default=1deg<br>
+  --c CATALOG           Catalog name. The default is GLADE2.3
+                        (VII/281/glade2). Available catalogs with distances &
+                        separations: GLADE v2.3 (VII/281/glade2); 6dF DR3 spec
+                        (VII/259/spectra). Other catalogs will not have
+                        calculated separations. Some examples are: 2MASS
+                        extended sources (VII/233/xsc); HYPERLEDA
+                        (VII/237/pgc); SDSS DR12 (V/147/sdss12); GAIA S/G
+                        class (VII/285/gdr2ext)<br>
   --dist-min DIST_MIN   Minimum distance (Mpc)<br>
   --dist-max DIST_MAX   Maximum distance (Mpc)<br>
   --sep-max SEP_MAX_KPC<br>
                         Maximum projected separation (kpc)<br>
-  --out OUT             Output file name (CSV) default: galaxies.csv<br>
+  --out OUT             Output file name (CSV)<br>
+
+
 
 **Example:**
 
 ```
 python get_galaxies.py --ra 219.51950000 --dec -60.34800000 --r 3. --out my_galaxies.csv --dist-max 100
+```
+
+**Example** for a generic catalog (say HYPERLEDA, see the help for suggestions):
+
+```
+python get_galaxies.py --ra 329.41950000 --dec -80.3580 --r 3.0 --c VII/237/pgc --out galaxies_FRB190711_hyperleda.csv
 ```
