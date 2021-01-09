@@ -76,6 +76,60 @@ def get_candidate(name):
     return response
 
 
+def get_alerts(name):
+    """
+    Get the alerts from the Fritz marshal
+
+    ----
+    Parameters
+
+    name str
+        source ZTF name
+    """
+
+    response = api('GET',
+                   f'https://fritz.science/api/alerts/ztf/{name}')
+
+    print(f'HTTP code: {response.status_code}, {response.reason}')
+    if response.status_code == 400:
+        print(f'JSON response: {response.json()}')
+
+    return response.json()
+
+
+def add_source(name, group_ids):
+    """
+    Add a new ZTF source to the db
+
+    ----
+    Parameters
+
+    name str
+        source ZTF name
+    group_ids list of int
+        list of group IDs
+    """
+
+    # Compute precise coordinates
+    alerts = get_alerts(name)
+    ra = np.median([a['candidate']['ra'] for a in alerts['data']])
+    dec = np.median([a['candidate']['dec'] for a in alerts['data']])
+   
+    data = {"ra": ra,
+            "dec": dec,
+            "id": name,
+            "group_ids": group_ids
+            }
+   
+    response = api('POST',
+                   'https://fritz.science/api/sources',
+                   data=data)
+   
+    print(f'HTTP code: {response.status_code}, {response.reason}')
+    if response.status_code in (200, 400):
+        print(f'JSON response: {response.json()}')
+
+
 def upload_source(name, group_ids):
     """
     Upload a list of sources to the Fritz marshal
@@ -94,7 +148,6 @@ def upload_source(name, group_ids):
             "inviteGroupIds": group_ids,
             "unsaveGroupIds": []
             }
-    
 
     response = api('POST',
                    'https://fritz.science/api/source_groups',
@@ -130,23 +183,26 @@ e.g.: SNLensing = 236')
         print("Provide source names or a CSV filename")
         exit()
 
+    # From str to int
     my_groups = [int(g) for g in args.groups]
 
     # For each ID, check which files are available
     for source in sources:
         # Does the source exist?
         response = check_source_exists(source)
+
+        # If the source does not exist
         if response.status_code != 200:
-            # FIXME
-            # HOW DO I SAVE THE SOURCE??
-            # uploade_source() does not work
-            #upload_source(source, my_groups)
-            #print(f"{source} saved.")
+            # Add the source and continue
+            add_source(source, my_groups)
             continue
+
         groups = get_groups(source)
         group_ids = [g['id'] for g in groups]
+        # Which of my groups still needs the source to be saved?
         missing_groups = [g for g in my_groups
                           if not (int(g) in group_ids)]
         print("Missing groups:", missing_groups)
         if len(missing_groups) > 0:
+            # Save the source to the desired groups
             upload_source(source, missing_groups)
