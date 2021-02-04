@@ -1,19 +1,19 @@
-#Author: Igor Andreoni
-#email: andreoni@caltech.edu
-
 import requests
 import glob
 import re
 import numpy as np
-from astropy.io import ascii
+from astropy.io import ascii, fits
+from astropy.table import Table
+from astropy.time import Time
 
 # Copy the API token from your Fritz account
+# This is the only change that you are requested to make
 token = 'copied-from-fritz'
 
-# Default observers and reducers
+# Default observers and reducers (NOT reqired! Used only when -d is given)
 # users IDs can be found at: https://fritz.science/api/user
-default_observer = [37]
-default_reducer = [14]
+default_observer = [14,32]
+default_reducer = [123]
 
 
 def api(method, endpoint, data=None):
@@ -84,8 +84,17 @@ def upload_spectrum(spec, observers, reducers, group_ids=[], date=None,
     ztfid str
         ID of the ZTF source, e.g. ZTF20aclnxgz
     """
-    #Get rid of NaNs in lpipe output since fritz does not like NaNs
+
+    # Remove meta from spec, they are already stored
+    spec._meta = None
+    #Get rid of NaNs in lpipe output since fritz does not like NaNs and inf
     good_rows = ~np.isnan(spec['flux'])
+    usespec = spec[good_rows]
+    good_rows = ~np.isinf(spec['flux'])
+    usespec = spec[good_rows]
+    good_rows = ~np.isnan(spec['fluxerr'])
+    usespec = spec[good_rows]
+    good_rows = ~np.isinf(spec['fluxerr'])
     usespec = spec[good_rows]
     
     data = {
@@ -103,13 +112,12 @@ def upload_spectrum(spec, observers, reducers, group_ids=[], date=None,
             "origin": "",
             "obj_id": ztfid
             }
-
     response = api('POST',
                    'https://fritz.science/api/spectrum',
                    data=data)
 
     print(f'HTTP code: {response.status_code}, {response.reason}')
-    if response.status_code in (200, 400):
+    if response.status_code in (400):
         print(f'JSON response: {response.json()}')
 
 
@@ -122,8 +130,8 @@ if __name__ == "__main__":
                         help='Use default reducer ID and observer - \
 please customize the code')
     parser.add_argument('--date', dest='date', type=str,
-                        required=True, help='Date of the observations, \
-e.g. 2020-11-10T00:00:00', default='2020-11-11T00:00:00')
+                        required=True, help='Date of the observations (UT), \
+e.g. 2020-11-10T00:00:00 or 2021-01-12')
     parser.add_argument('--inst', dest='inst_id', type=int,
                         required=True, help='Instrument ID, \
 e.g. inst_id = 3 for DBSP, inst_id = 7 for LRIS. Instrument IDs can be found here: \
@@ -158,18 +166,38 @@ or enter 'c' to skip this source and continue: \n")
         elif filename[-4:] == 'fits':
             print("Reading of FITS files is not yet implemented, \
 please enter the name of an ascii file")
-            continue
-        # Read the file
-        spec = ascii.read(filename)
-        spec.rename_column("col1", "wavelength")
-        spec.rename_column("col2", "flux")
-        # Uncertainty for DBSP
-        if len(spec.colnames) > 2 and args.inst_id == 3:
-            spec.rename_column("col3", "fluxerr")
-        elif len(spec.colnames) > 2 and args.inst_id == 7:
-            spec.rename_column("col4", "fluxerr")
-        elif len(spec.colnames) == 2:
-            spec["fluxerr"] = np.zeros(len(spec))
+            hdul = fits.open(filename)
+            spec = hdul[-1].data
+            header = hdul[-1].header
+            # Merge headers (-2 is blue, -3 is red)
+            colors = {-2: "BLUE", -3: "RED"}
+            for ext in [-2, -3]:
+                # Add a card to indicate which side's header starts
+                header.append(("SIDE", f"Here starts the \
+{colors[ext]} side header"))
+                for k in hdul[ext].header.keys():
+                    try:
+                        header.append((k, hdul[ext].header[k]))
+                    except ValueError:
+                        continue
+            # Fix the table format
+            spec = Table(hdul[-1].data)
+            spec._meta = header.tostring()
+            spec.rename_column("wave", "wavelength")
+            spec.rename_column("sigma", "fluxerr")
+        else:
+            # Read the file as ascii
+            spec = ascii.read(filename)
+            header = None
+            spec.rename_column("col1", "wavelength")
+            spec.rename_column("col2", "flux")
+            # Uncertainty for DBSP
+            if len(spec.colnames) > 2 and args.inst_id == 3:
+                spec.rename_column("col3", "fluxerr")
+            elif len(spec.colnames) > 2 and args.inst_id == 7:
+                spec.rename_column("col4", "fluxerr")
+            elif len(spec.colnames) == 2:
+                spec["fluxerr"] = np.zeros(len(spec))
         # Metadata
         # For LRIS:
         if args.inst_id == 7:
@@ -192,9 +220,9 @@ the name of the source for the spectrum {source_filename}:\n")
         groups = get_groups(source)
         group_ids = []
         if len(groups) == 0:
-            print("{source} is not saved in any group")
+            print(f"{source} is not saved in any group")
         else:
-            print("{source} was saved in the following groups:")
+            print(f"{source} was saved in the following groups:")
         for g in groups:
             print(f"{g['id']}, {g['name']}")
             group_ids.append(g['id'])
@@ -207,5 +235,5 @@ the name of the source for the spectrum {source_filename}:\n")
         print(f"Uploading spectrum {source_filename} for source {source} \
 to group IDs {group_ids}")
         upload_spectrum(spec, observers, reducers, group_ids=group_ids,
-                        date=args.date, inst_id=args.inst_id,
+                        date=Time(args.date).iso, inst_id=args.inst_id,
                         ztfid=source, meta=meta)
