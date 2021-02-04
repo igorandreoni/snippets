@@ -1,11 +1,53 @@
 Collection of useful astronomy snippets. All work with Python 3.
 
+## Upload spectra to Fritz
+
+usage: upload_spectra_fritz.py [-h] [-d] [--date DATE] [--inst INST_ID]
+                               ID [ID ...] <br>
+
+Upload spectra to the Fritz marshal, individually or in bulk. <br>
+
+positional arguments:<br>
+  ID              Spectra filenames <br>
+
+optional arguments:<br>
+  -h, --help      show this help message and exit<br>
+  --date DATE     Date of the observations, e.g. 2020-11-10T00:00:00 <br>
+                  or 2021-01-20<br>
+  --inst INST_ID  Instrument ID, e.g. inst_id = 3 for DBSP. Instrument IDs can<br>
+                  be found here: https://fritz.science/api/instrument<br>
+  -d              Use default reducer ID and observer - please customize the
+                  code if you want to use this (unrequired) option<br>
+
+**Notes:**
+* If the name of the ZTF source is in the filename, it will be recognized automatically; filenames without the ZTF source name are fine, too
+* Make sure that 'ZTF' appears only once at most in the filename
+* The spectra are assumed to have wavelength in the first column (in angstrom), flux in the second column, possibly flux error in the third column
+* The code will automatically let you know under which group IDs the source was saved, but they can be changed interactively when uploading 
+* Please update your API before using the code. You can find the API code in your Fritz account page
+* Headers will be uploaded along with the spectra; DBSP_DRP output headers will be merged automatically before the upload
+
+**Useful links:**
+* Instrument IDs: https://fritz.science/api/instrument
+* User IDs: https://fritz.science/api/user
+* Group IDs: https://fritz.science/api/groups
+* Skyportal API guide: https://skyportal.io/docs/api.html
+* Fritz marshal user's guide https://fritz-marshal.org/doc/
+
+**Examples:**
+```
+python upload_spectra_fritz.py ZTF*fits --inst 3 --date 2020-10-28T07:00:00
+python upload_spectra_fritz.py lris20201017_ZTF20thebest.spec --inst 7 --date 2020-10-17
+```
+
 ## Crop and display DBSP spectra
 usage: dbsp_crop_spec.py [-h] [--doPlot] [-n NAMES [NAMES ...]] <br>
                          [--suffix OUT_SUFFIX]<br>
 <br>
-Crop DBSP spectra, prepare them for upload on Fritz, and plot them up. If no<br>
-option is given, all spectra in the format ./ZTF\*.fits will be processed<br>
+Crop DBSP spectra and plot them up. <b>This is NOT a necessary step <br>
+for the upload on Fritz</b>, if FITS files from DBSP_DRP are available. <br>
+<br>
+If no option is given, all spectra in the format ./ZTF\*.fits <br>will be processed.<br>
 <br>
 optional arguments:<br>
   -h, --help            show this help message and exit<br>
@@ -24,42 +66,6 @@ python dbsp_crop_spec.py --n ZTF19cool.fits ZTF20lesscool.fits --doPlot
 **Limitations:** Headers are not yet transferred
 
 
-## Upload spectra to Fritz
-
-usage: upload_spectra_fritz.py [-h] [-d] [--date DATE] [--inst INST_ID]
-                               ID [ID ...] <br>
-
-Upload spectra to the Fritz marshal, individually or in bulk. <br>
-
-positional arguments:<br>
-  ID              Spectra filenames <br>
-
-optional arguments:<br>
-  -h, --help      show this help message and exit<br>
-  -d              Use default reducer ID and observer - please customize the
-                  code<br>
-  --date DATE     Date of the observations, e.g. 2020-11-10T00:00:00<br>
-  --inst INST_ID  Instrument ID, e.g. inst_id = 3 for DBSP. Instrument IDs can<br>
-                  be found here: https://fritz.science/api/instrument<br>
-
-**Notes:**
-* If the name of the ZTF source is in the filename, it will be recognized automatically; filenames without the ZTF source name are fine, too
-* Make sure that 'ZTF' appears only once at most in the filename
-* The spectra are assumed to have wavelength in the first column (in angstrom), flux in the second column, possibly flux error in the third column
-* Specifying the group IDs may not be necessary
-* Please update your API before using the code. You can find the API code in your Fritz account page
-
-**Useful links:**
-* Instrument IDs: https://fritz.science/api/instrument
-* User IDs: https://fritz.science/api/user
-* Group IDs: https://fritz.science/api/groups
-* Skyportal API guide: https://skyportal.io/docs/api.html
-* Fritz marshal user's guide https://fritz-marshal.org/doc/
-
-**Example:**
-```
-python upload_spectra_fritz.py ZTF*txt --inst 3 --date 2020-10-28T07:00:00
-```
 
 ## Get galaxies
 usage: get_galaxies.py [-h] --ra RA --dec DEC [--r RAD] [--c CATALOG]<br>
