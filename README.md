@@ -25,7 +25,7 @@ optional arguments:<br>
 * Make sure that 'ZTF' appears only once at most in the filename
 * The spectra are assumed to have wavelength in the first column (in angstrom), flux in the second column, possibly flux error in the third column
 * The code will automatically let you know under which group IDs the source was saved, but they can be changed interactively when uploading 
-* Please update your API before using the code. You can find the API code in your Fritz account page
+* Please copy your API token before using the code. You can find the API code in your Fritz account page
 * Headers will be uploaded along with the spectra; DBSP_DRP output headers will be merged automatically before the upload
 
 **Useful links:**
