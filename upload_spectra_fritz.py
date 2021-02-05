@@ -1,3 +1,6 @@
+# Author: Igor Andreoni
+# email: andreoni@caltech.edu
+
 import requests
 import glob
 import re
@@ -7,13 +10,15 @@ from astropy.table import Table
 from astropy.time import Time
 
 # Copy the API token from your Fritz account
-# This is the only change that you are requested to make
 token = 'copied-from-fritz'
 
-# Default observers and reducers (NOT reqired! Used only when -d is given)
-# users IDs can be found at: https://fritz.science/api/user
+"""
+Default observers and reducers (these are NOT necessary to be set,
+since they will be used only when the -d option is called).
+User IDs can be found at: https://fritz.science/api/user
+"""
 default_observer = [14,32]
-default_reducer = [123]
+default_reducer = [14]
 
 
 def api(method, endpoint, data=None):
@@ -117,8 +122,40 @@ def upload_spectrum(spec, observers, reducers, group_ids=[], date=None,
                    data=data)
 
     print(f'HTTP code: {response.status_code}, {response.reason}')
-    if response.status_code in (400):
+    if response.status_code == 400:
         print(f'JSON response: {response.json()}')
+
+
+def crop_spectrum(spectrum):
+    """
+    Crop the spectra
+    ----
+    Parameters
+        spec astropy.table object
+            table with the spectrum
+    ----
+    Returns
+        cropped spectrum
+    """
+
+    # Define the ranges to crop the spectra
+    default_crop = str2bool(input("Are you happy with the default crop \
+between 3,200A and 10,000A? \n"))
+    if default_crop is True:
+        crop_range = (3200, 10000)
+    else:
+        happy = False
+        while happy is False:
+            raw_range = input(f"Input the desired range (two numbers, \
+comma-separated): \n").split(",")
+            crop_range = tuple([int(s) for s in raw_range])
+            print(f"Your range for cropping will be {crop_range}")
+            happy = str2bool(input(f"Please confirm that this \
+is the range you want [y/n]:\n"))
+    spectrum = spectrum[spectrum['wavelength'] < np.max(crop_range)]
+    spectrum = spectrum[spectrum['wavelength'] > np.min(crop_range)]
+
+    return spectrum
 
 
 if __name__ == "__main__":
@@ -126,16 +163,17 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Upload spectra to Fritz.')
     parser.add_argument('ID', nargs='+', help='Spectra filenames')
-    parser.add_argument('-d', action='store_true',
-                        help='Use default reducer ID and observer - \
-please customize the code')
     parser.add_argument('--date', dest='date', type=str,
                         required=True, help='Date of the observations (UT), \
-e.g. 2020-11-10T00:00:00 or 2021-01-12')
+for example 2020-11-10T00:00:00 or 2021-01-12')
     parser.add_argument('--inst', dest='inst_id', type=int,
                         required=True, help='Instrument ID, \
-e.g. inst_id = 3 for DBSP, inst_id = 7 for LRIS. Instrument IDs can be found here: \
-https://fritz.science/api/instrument', default=3)
+for example. inst_id = 3 for DBSP, inst_id = 7 for LRIS. \
+Instrument IDs can be found at: \
+https://fritz.science/api/instrument')
+    parser.add_argument('-d', action='store_true',
+                        help='Use default reducer ID and observer; \
+please customize the code if you want to use this (unrequired) option')
     args = parser.parse_args()
 
     # Observers, reducers
@@ -146,10 +184,10 @@ https://fritz.science/api/instrument', default=3)
         reducers = default_reducer
     else:
         print("users IDs can be found at: https://fritz.science/api/user")
-        observers = input("enter comma-separated IDs (int) \
+        observers = input("Enter comma-separated IDs (int) \
 of the observers:\n")
         observers = observers.split(",")
-        reducers = input("enter comma-separated IDs (int) of the reducers:\n")
+        reducers = input("Enter comma-separated IDs (int) of the reducers:\n")
         reducers = reducers.split(",")
 
     # For each ID, check which files are available
@@ -182,7 +220,7 @@ please enter the name of an ascii file")
                         continue
             # Fix the table format
             spec = Table(hdul[-1].data)
-            spec._meta = header.tostring()
+            spec.meta = {'header': header.tostring()}
             spec.rename_column("wave", "wavelength")
             spec.rename_column("sigma", "fluxerr")
         else:
@@ -198,13 +236,28 @@ please enter the name of an ascii file")
                 spec.rename_column("col4", "fluxerr")
             elif len(spec.colnames) == 2:
                 spec["fluxerr"] = np.zeros(len(spec))
+
+        # Crop DBSP spectra
+        if args.inst_id == 3:
+            print(f"The current wavelength range is between \
+{np.round(np.min(spec['wavelength']))} and \
+{np.round(np.max(spec['wavelength']))}.")
+            do_crop = str2bool(input("Do you want to crop the spectrum? \n"))
+            if do_crop is True:
+                spec = crop_spectrum(spec)
+
         # Metadata
         # For LRIS:
         if args.inst_id == 7:
             meta = spec._meta['comments']
         # other instruments:
         else:
-            meta = spec._meta
+            try:
+                meta = spec.meta['header']
+            except KeyError:
+                print("WARNING! Unable to find header metadata")
+                print("No metadata will be uploaded")
+                meta = None
         # Extract the source filename
         if not "ZTF" in source_filename:
             source = input(f"No 'ZTF' found in the file name, please enter \
@@ -217,6 +270,7 @@ the name of the source for the spectrum {source_filename}:\n")
             print(f"Skipping {source}...")
             continue
 
+        # Groups
         groups = get_groups(source)
         group_ids = []
         if len(groups) == 0:
@@ -232,6 +286,8 @@ the name of the source for the spectrum {source_filename}:\n")
             group_ids = input("Please enter comma-separated group IDs (int)\n")
             group_ids = group_ids.split(",")
             group_ids = [int(g) for g in group_ids]
+
+        # Upload
         print(f"Uploading spectrum {source_filename} for source {source} \
 to group IDs {group_ids}")
         upload_spectrum(spec, observers, reducers, group_ids=group_ids,
