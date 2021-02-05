@@ -12,8 +12,9 @@ positional arguments:<br>
 
 optional arguments:<br>
   -h, --help      show this help message and exit<br>
-  --date DATE     Date of the observations, e.g. 2020-11-10T00:00:00 <br>
-                  or 2021-01-20<br>
+  --date DATE     Date of the observations, <br>
+                  for example 2020-11-10T00:00:00
+                  or 2021-01-20 <br>
   --inst INST_ID  Instrument ID, e.g. inst_id = 3 for DBSP. Instrument IDs can<br>
                   be found here: https://fritz.science/api/instrument<br>
   -d              Use default reducer ID and observer - please customize the
