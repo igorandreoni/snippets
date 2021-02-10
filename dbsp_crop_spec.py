@@ -21,8 +21,8 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Crop DBSP spectra, \
-prepare them for upload on Fritz, and plot them up. If no option \
-is given, all spectra in the format ./ZTF*fits will be processed')
+and plot them up. If no option is given, all spectra in the \
+format ./ZTF*fits will be processed')
 
     parser.add_argument("--doPlot",  action="store_true",
                         default=False, help='Plot up the spectra')
