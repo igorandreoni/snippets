@@ -1,5 +1,30 @@
 Collection of useful astronomy snippets. All work with Python 3.
 
+## Query Legacy Survey DR8 photoz
+
+
+Query photometric redshifts from Legacy Survey DR8<br>
+<br>
+usage: query_photoz_datalab.py [-h] [-r RADIUS] RA, Dec [RA, Dec ...] <br> 
+ <br> 
+positional arguments: <br> 
+  RA, Dec     RA and Dec (degrees) <br> 
+
+optional arguments: <br> 
+  -h, --help  show this help message and exit <br> 
+  -r RADIUS   Search radius (arcsc) <br> 
+ <br> 
+
+**Example:**
+
+```
+python query_photoz_datalab.py 199.651874 30.3243492 -r 2
+```
+```
+z_phot_median, z_phot_std, z_phot_l95, ra, dec, type, flux_z from ls_dr8.photo_z
+['0.362533', '0.086208', '0.258176', '199.65187593677', '30.324329766903', 'EXP', '7.06425', 0.07021754722965218]
+```
+
 ## Upload spectra to Fritz
 
 usage: upload_spectra_fritz.py [-h] [-d] [--date DATE] [--inst INST_ID]
