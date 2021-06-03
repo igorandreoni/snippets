@@ -25,6 +25,42 @@ z_phot_median, z_phot_std, z_phot_l95, ra, dec, type, flux_z from ls_dr8.photo_z
 ['0.362533', '0.086208', '0.258176', '199.65187593677', '30.324329766903', 'EXP', '7.06425', 0.07021754722965218]
 ```
 
+## Find sources in ZTF data
+
+Query Kowalski and obtain a summary table of all sources in a cone <br>
+<br>
+usage: cone_search_ztf.py [-h] [-r RADIUS] [--date-start DATE_START]<br>
+                          [--date-end DATE_END] [--ndethist NDETHIST_MIN]<br>
+                          [--pid PROGRAMID_LIST [PROGRAMID_LIST ...]]<br>
+                          [--drb DRB_MIN] [--out OUT]<br>
+                          RA, Dec [RA, Dec ...]<br>
+<br>
+ZTF alert cone search using Kowalski<br>
+<br>
+positional arguments:<br>
+  RA, Dec               RA and Dec (degrees)<br>
+<br>
+optional arguments:<br>
+  -h, --help            show this help message and exit<br>
+  -r RADIUS             Search radius (arcmin)<br>
+  --date-start DATE_START<br>
+                        Start date of the query, in ISO format. Example:<br>
+                        '2017-08-17 12:41:04.4'<br>
+  --date-end DATE_END   End date of the query, in ISO format. Example:<br>
+                        '2017-08-18 12:00:00.0'<br>
+  --ndethist NDETHIST_MIN<br>
+                        Minimum number of detections<br>
+  --pid PROGRAMID_LIST [PROGRAMID_LIST ...]<br>
+                        ZTF program IDs<br>
+  --drb DRB_MIN         Minimum drb score<br>
+  --out OUT             Output filename: if given, a CSV file will be created<br>
+
+**Example:**
+
+```
+python cone_search_ztf.py 272.312512 -9.62908 -r 10 --date-start '2021-06-01' --date-end '2021-06-12' --pid 1 --out my_sources.csv
+```
+
 ## Upload spectra to Fritz
 
 usage: upload_spectra_fritz.py [-h] [-d] [--date DATE] [--inst INST_ID]
