@@ -236,7 +236,7 @@ using Kowalski')
                 break
 
     # Create a nice table
-    names = ['objectId'] + list(summary_info[list(summary_info.keys())[0]].keys())
+    names = ['name'] + list(summary_info[list(summary_info.keys())[0]].keys())
     columns = []
     for k in summary_info[list(summary_info.keys())[0]].keys():
         columns.append([summary_info[object_id][k] for object_id in object_ids])
