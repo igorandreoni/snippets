@@ -202,8 +202,6 @@ or enter 'c' to skip this source and continue: \n")
         if filename == 'c':
             continue
         elif filename[-4:] == 'fits':
-            print("Reading of FITS files is not yet implemented, \
-please enter the name of an ascii file")
             hdul = fits.open(filename)
             spec = hdul[-1].data
             header = hdul[-1].header
