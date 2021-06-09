@@ -101,7 +101,7 @@ def upload_spectrum(spec, observers, reducers, group_ids=[], date=None,
     usespec = spec[good_rows]
     good_rows = ~np.isinf(spec['fluxerr'])
     usespec = spec[good_rows]
-    
+
     data = {
             "observed_by": observers,
             "group_ids": group_ids,
@@ -198,13 +198,13 @@ of the observers:\n")
             filename = input(f"Enter the correct spectrum file name \
 or enter 'c' to skip this source and continue: \n")
         else:
-            filename = files[0] 
+            filename = files[0]
         if filename == 'c':
             continue
         elif filename[-4:] == 'fits':
             hdul = fits.open(filename)
             spec = hdul[-1].data
-            header = hdul[-1].header
+            header = hdul[1].header # headers from raw spectrum (i.e see https://dbsp-drp.readthedocs.io/en/latest/outputs.html)
             # Merge headers (-2 is blue, -3 is red)
             colors = {-2: "BLUE", -3: "RED"}
             for ext in [-2, -3]:
