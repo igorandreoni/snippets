@@ -37,10 +37,10 @@ def query_coords_ls(ra,dec,radius_arcsec=5,
                 # Check that the separation is less than required
                 if float(sep[i].arcsec) < radius_arcsec:
                     result.append(result0[i])
-
+        # Print the results
         print("z_phot_median, z_phot_std, z_phot_l95, ra, dec, type, flux_z")
         for r in result:
-            print(r)
+            print(", ".join([str(x) for x in r]))
 
 
 if __name__ == '__main__':
