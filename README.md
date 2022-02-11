@@ -170,7 +170,6 @@ python get_galaxies.py --ra 329.41950000 --dec -80.3580 --r 3.0 --c VII/237/pgc 
 
 
 ## Create JSON
-### Create JSON
 
 Create JSON files for DECam given an observing sequence table
 ```
