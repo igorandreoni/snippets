@@ -204,23 +204,26 @@ or enter 'c' to skip this source and continue: \n")
         elif filename[-4:] == 'fits':
             hdul = fits.open(filename)
             spec = hdul[-1].data
-            header = hdul[1].header # headers from raw spectrum (i.e see https://dbsp-drp.readthedocs.io/en/latest/outputs.html)
-            # Merge headers (-2 is blue, -3 is red)
-            colors = {-2: "BLUE", -3: "RED"}
-            for ext in [-2, -3]:
-                # Add a card to indicate which side's header starts
-                header.append(("SIDE", f"Here starts the \
-{colors[ext]} side header"))
-                for k in hdul[ext].header.keys():
-                    try:
-                        header.append((k, hdul[ext].header[k]))
-                    except ValueError:
-                        continue
+
             # Fix the table format
             spec = Table(hdul[-1].data)
-            spec.meta = {'header': header.tostring()}
             spec.rename_column("wave", "wavelength")
             spec.rename_column("sigma", "fluxerr")
+            
+            # build header
+            for i, hud in enumerate(hdul): # saves info from all headers - might be too much, but better safe than sorry
+                header = hdul[i].header
+                if i==0: # contains coadd file paths and software versions (possibly useful for debugging)
+                    fileext = 'VERSION'
+                    spec.meta = {'header': {fileext: dict(header)}}
+                else: # index headers by file extension name (eg. RED00XX/BLUE00XX = header from raw exposures, RED/BLUE/SPLICED = reduced spectrum metadata)
+                    fileext = header['EXTNAME']
+                    spec.meta['header'][str(fileext)] = dict(header)
+                    try:
+                        del spec.meta['header'][str(fileext)]['COMMENT'] # this is just info about the FITS file format, not needed or relevant
+                    except:
+                        pass
+                    
         else:
             # Read the file as ascii
             spec = ascii.read(filename)
