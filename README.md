@@ -3,16 +3,17 @@ Collection of useful astronomy snippets. All work with Python 3.
 ## Query Legacy Survey DR8 photoz
 
 Query photometric redshifts from Legacy Survey DR8<br>
-<br>
-usage: query_photoz_datalab.py [-h] [-r RADIUS] RA, Dec [RA, Dec ...] <br> 
- <br> 
-positional arguments: <br> 
-  RA, Dec     RA and Dec (degrees) <br> 
 
-optional arguments: <br> 
-  -h, --help  show this help message and exit <br> 
-  -r RADIUS   Search radius (arcsc) <br> 
- <br> 
+```
+usage: query_photoz_datalab.py [-h] [-r RADIUS] RA, Dec [RA, Dec ...]
+
+positional arguments:
+  RA, Dec     RA and Dec (degrees)
+
+optional arguments:
+  -h, --help  show this help message and exit
+  -r RADIUS   Search radius (arcsc)
+```
 
 **Example:**
 
@@ -27,32 +28,34 @@ z_phot_median, z_phot_std, z_phot_l95, ra, dec, type, flux_z from ls_dr8.photo_z
 ## Find sources in ZTF data
 
 Query Kowalski and obtain a summary table of all sources in a cone <br>
-<br>
-usage: cone_search_ztf.py [-h] [-r RADIUS] [--date-start DATE_START]<br>
-                          [--date-end DATE_END] [--ndethist NDETHIST_MIN]<br>
-                          [--pid PROGRAMID_LIST [PROGRAMID_LIST ...]]<br>
-                          [--drb DRB_MIN] [--out OUT]<br>
-                          RA, Dec [RA, Dec ...]<br>
-<br>
-ZTF alert cone search using Kowalski<br>
-<br>
-positional arguments:<br>
-  RA, Dec               RA and Dec (degrees)<br>
-<br>
-optional arguments:<br>
-  -h, --help            show this help message and exit<br>
-  -r RADIUS             Search radius (arcmin)<br>
-  --date-start DATE_START<br>
-                        Start date of the query, in ISO format. Example:<br>
-                        '2017-08-17 12:41:04.4'<br>
-  --date-end DATE_END   End date of the query, in ISO format. Example:<br>
-                        '2017-08-18 12:00:00.0'<br>
-  --ndethist NDETHIST_MIN<br>
-                        Minimum number of detections<br>
-  --pid PROGRAMID_LIST [PROGRAMID_LIST ...]<br>
-                        ZTF program IDs<br>
-  --drb DRB_MIN         Minimum drb score<br>
-  --out OUT             Output filename: if given, a CSV file will be created<br>
+```
+usage: cone_search_ztf.py [-h] [-r RADIUS] [--date-start DATE_START]
+                          [--date-end DATE_END] [--ndethist NDETHIST_MIN]
+                          [--pid PROGRAMID_LIST [PROGRAMID_LIST ...]]
+                          [--drb DRB_MIN] [--out OUT]
+                          RA, Dec [RA, Dec ...]
+```
+
+ZTF alert cone search using Kowalski
+```
+positional arguments:
+  RA, Dec               RA and Dec (degrees)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -r RADIUS             Search radius (arcmin)
+  --date-start DATE_START
+                        Start date of the query, in ISO format. Example:
+                        '2017-08-17 12:41:04.4'
+  --date-end DATE_END   End date of the query, in ISO format. Example:
+                        '2017-08-18 12:00:00.0'
+  --ndethist NDETHIST_MIN
+                        Minimum number of detections
+  --pid PROGRAMID_LIST [PROGRAMID_LIST ...]
+                        ZTF program IDs
+  --drb DRB_MIN         Minimum drb score
+  --out OUT             Output filename: if given, a CSV file will be created
+```
 
 **Example:**
 
@@ -64,21 +67,22 @@ python cone_search_ztf.py 272.312512 -9.62908 -r 10 --date-start '2021-06-01' --
 
 usage: upload_spectra_fritz.py [-h] [-d] [--date DATE] [--inst INST_ID]
                                ID [ID ...] <br>
+```
+Upload spectra to the Fritz marshal, individually or in bulk.
 
-Upload spectra to the Fritz marshal, individually or in bulk. <br>
+positional arguments:
+  ID              Spectra filenames
 
-positional arguments:<br>
-  ID              Spectra filenames <br>
-
-optional arguments:<br>
-  -h, --help      show this help message and exit<br>
-  --date DATE     Date of the observations, <br>
+optional arguments:
+  -h, --help      show this help message and exit
+  --date DATE     Date of the observations,
                   for example 2020-11-10T00:00:00
-                  or 2021-01-20 <br>
-  --inst INST_ID  Instrument ID, e.g. inst_id = 3 for DBSP. Instrument IDs can<br>
-                  be found here: https://fritz.science/api/instrument<br>
+                  or 2021-01-20
+  --inst INST_ID  Instrument ID, e.g. inst_id = 3 for DBSP. Instrument IDs can
+                  be found here: https://fritz.science/api/instrument
   -d              Use default reducer ID and observer - please customize the
-                  code if you want to use this (unrequired) option<br>
+                  code if you want to use this (unrequired) option
+```
 
 **Notes:**
 * If the name of the ZTF source is in the filename, it will be recognized automatically; filenames without the ZTF source name are fine, too
@@ -102,21 +106,25 @@ python upload_spectra_fritz.py lris20201017_ZTF20thebest.spec --inst 7 --date 20
 ```
 
 ## Crop and display DBSP spectra
+
+```
 usage: dbsp_crop_spec.py [-h] [--doPlot] [-n NAMES [NAMES ...]] <br>
-                         [--suffix OUT_SUFFIX]<br>
-<br>
+                         [--suffix OUT_SUFFIX]
+```
 Crop DBSP spectra and plot them up. <b>This is NOT a necessary step <br>
 for the upload on Fritz</b>, if FITS files from DBSP_DRP are available. <br>
 <br>
 If no option is given, all spectra in the format ./ZTF\*.fits <br>will be processed.<br>
 <br>
-optional arguments:<br>
-  -h, --help            show this help message and exit<br>
-  --doPlot              Plot up the spectra<br>
-  -n NAMES [NAMES ...]<br>
-                        Names of the spectra; if not provided, all spectra in <br>
-                        the format ./ZTF\*.fits will be processed <br>
-  --suffix OUT_SUFFIX   suffix for the output; default = '_crop.txt' <br>
+```
+optional arguments:
+  -h, --help            show this help message and exit
+  --doPlot              Plot up the spectra
+  -n NAMES [NAMES ...]
+                        Names of the spectra; if not provided, all spectra in
+                        the format ./ZTF\*.fits will be processed
+  --suffix OUT_SUFFIX   suffix for the output; default = '_crop.txt'
+```
 
 **Example:**
 
@@ -132,14 +140,14 @@ python dbsp_crop_spec.py --n ZTF19cool.fits ZTF20lesscool.fits --doPlot
 usage: get_galaxies.py [-h] --ra RA --dec DEC [--r RAD] [--c CATALOG]<br>
                        [--dist-min DIST_MIN] [--dist-max DIST_MAX]<br>
                        [--sep-max SEP_MAX_KPC] [--out OUT]<br>
-<br>
-Query galaxy catalogs<br>
-<br>
-optional arguments:<br>
-  -h, --help            show this help message and exit<br>
-  --ra RA               Right Ascension of the center of the query (deg)<br>
-  --dec DEC             Declination of the center of the query (deg)<br>
-  --r RAD               Radius of the query (deg), default=1deg<br>
+```
+Query galaxy catalogs
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --ra RA               Right Ascension of the center of the query (deg)
+  --dec DEC             Declination of the center of the query (deg)
+  --r RAD               Radius of the query (deg), default=1deg
   --c CATALOG           Catalog name. The default is GLADE2.3
                         (VII/281/glade2). Available catalogs with distances &
                         separations: GLADE v2.3 (VII/281/glade2); 6dF DR3 spec
@@ -147,17 +155,16 @@ optional arguments:<br>
                         calculated separations. Some examples are: 2MASS
                         extended sources (VII/233/xsc); HYPERLEDA
                         (VII/237/pgc); SDSS DR12 (V/147/sdss12); GAIA S/G
-                        class (VII/285/gdr2ext)<br>
-  --dist-min DIST_MIN   Minimum distance (Mpc)<br>
-  --dist-max DIST_MAX   Maximum distance (Mpc)<br>
-  --sep-max SEP_MAX_KPC<br>
-                        Maximum projected separation (kpc)<br>
-  --out OUT             Output file name (CSV)<br>
-
+                        class (VII/285/gdr2ext)
+  --dist-min DIST_MIN   Minimum distance (Mpc)
+  --dist-max DIST_MAX   Maximum distance (Mpc)
+  --sep-max SEP_MAX_KPC
+                        Maximum projected separation (kpc)
+  --out OUT             Output file name (CSV)
+```
 
 
 **Example:**
-
 ```
 python get_galaxies.py --ra 219.51950000 --dec -60.34800000 --r 3. --out my_galaxies.csv --dist-max 100
 ```
