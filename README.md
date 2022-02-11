@@ -2,7 +2,6 @@ Collection of useful astronomy snippets. All work with Python 3.
 
 ## Query Legacy Survey DR8 photoz
 
-
 Query photometric redshifts from Legacy Survey DR8<br>
 <br>
 usage: query_photoz_datalab.py [-h] [-r RADIUS] RA, Dec [RA, Dec ...] <br> 
@@ -167,4 +166,55 @@ python get_galaxies.py --ra 219.51950000 --dec -60.34800000 --r 3. --out my_gala
 
 ```
 python get_galaxies.py --ra 329.41950000 --dec -80.3580 --r 3.0 --c VII/237/pgc --out galaxies_FRB190711_hyperleda.csv
+```
+
+
+## Create JSON
+### Create JSON
+
+Create JSON files for DECam given an observing sequence table
+```
+positional arguments:
+  filename              Sequence file name (CSV)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -oh OVERHEAD, --overhead OVERHEAD
+                        Overhead between exposures (s)
+  -max MAX_TIME, --max-time MAX_TIME
+                        Maximim time per sequence (hr)
+  -pi PI, --principal-investigator PI
+                        Program Principal Investigator
+  -prog PROGRAM, --program PROGRAM
+                        Program name
+  -id PROPID, --proposal-id PROPID
+                        Proposal ID
+  -d OUTDIR, --directory OUTDIR
+                        Path to the directory where the JSON files will be
+                        written
+```
+
+The input CSV file must have these columns:
+```
+fieldname, ra, dec, filter, exptime
+CDFS, 52.5, -28.1, g, 140
+CDFS, 52.5,-28.1, i, 170
+...
+```
+
+Example:
+```
+python create_json.py observing_sequence.csv -max 2 -pi "Albert Einstein" -prog "Fun With Relativity" -id NOAO-1908A --directory JSON_files
+```
+
+Example output:
+```
+Observing sequence found with 148 exposures
+Assuming 30s overhead between exposures
+(this can be changed by passing the --overhead argument)
+Sequence 1 has 43 exposures, total time 1.96hr
+Sequence 2 has 39 exposures, total time 2.00hr
+Sequence 3 has 39 exposures, total time 2.00hr
+Sequence 4 has 27 exposures, total time 1.34hr
+Expected total run time for the night: 7.36hr
 ```
