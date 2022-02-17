@@ -17,7 +17,7 @@ optional arguments:
 
 **Notes:**
 * Make sure that the latest version of the datalab package is installed
-`pip install --upgrade datalab`
+`pip install --upgrade noaodatalab`
  
 
 **Example:**
@@ -26,7 +26,7 @@ optional arguments:
 python query_photoz_datalab.py 199.651874 30.3243492 -r 2
 ```
 ```
-z_phot_median, z_phot_std, z_phot_l95, ra, dec, type, flux_z from ls_dr8.photo_z
+z_phot_median, z_phot_std, z_phot_l95, ra, dec, type, flux_z, sep_arcsec
 0.362533, 0.086208, 0.258176, 199.65187593677, 30.324329766903, EXP, 7.06425, 0.07021754722965218
 ```
 
