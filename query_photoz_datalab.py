@@ -17,10 +17,8 @@ def query_coords_ls(ra,dec,radius_arcsec=5,
         query = qc.query(sql=f"SELECT z_phot_median, z_phot_std, z_phot_l95, ra, dec, \
                              type, flux_z from ls_dr8.photo_z INNER JOIN ls_dr8.tractor \
                              ON ls_dr8.tractor.ls_id = ls_dr8.photo_z.ls_id \
-                             where ra > ({ra-radius_deg}) and \
-                             ra < ({ra+radius_deg}) and \
-                             dec > ({dec-radius_deg}) and \
-                             dec < ({dec+radius_deg})")
+                             where 't' = Q3C_RADIAL_QUERY(ra, dec, {ra}, {dec}, {radius_deg})")
+
         result0 = query.split('\n')
         result0 = [r.split(",") for r in result0][1:-1]
 
