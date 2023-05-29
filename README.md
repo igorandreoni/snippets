@@ -229,3 +229,24 @@ Sequence 3 has 39 exposures, total time 2.00hr
 Sequence 4 has 27 exposures, total time 1.34hr
 Expected total run time for the night: 7.36hr
 ```
+
+## Get a new transient name
+
+Given a list of transients, a base for the name, and the MJD of a discovery, output the new ordered label for the transient
+
+```
+options:
+  -h, --help            show this help message and exit
+  -n NAMES [NAMES ...], --name NAMES [NAMES ...]
+                        <Required> List of transient names e.g. AT2018gfo AT2022cmc
+  --mjd MJD             MJD of the new transient detection (default: todays MJD)
+  -b BASE, --base BASE  Base name for the transients, e.g. AT
+```
+**Example:**
+```
+python nameObject.py -n ZTF23ab ZTF22a ZTF23azz --base ZTF --mjd 60093.55
+```
+Example output:
+```
+ZTF23baa
+```
