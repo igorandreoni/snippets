@@ -12,7 +12,7 @@ from astropy.time import Time
 
 from penquins import Kowalski
 
-def api(method, endpoint, data=None):
+def api(method, endpoint, data=None, token=None):
     """API request"""
 
     headers = {'Authorization': f'{token}'}
@@ -20,8 +20,9 @@ def api(method, endpoint, data=None):
 
     return response
 
+
 def query_kowalski_cone(ra, dec, search_rad, jd_start=2458194, jd_end=2459406,
-                        programid_list=[1], drb_min=0.64, ndethist_min=2):
+                        programid_list=[1], drb_min=0.64, ndethist_min=2, token=None):
     """
     Cone search of ZTF alerts using Kowalski
 
@@ -41,6 +42,8 @@ def query_kowalski_cone(ra, dec, search_rad, jd_start=2458194, jd_end=2459406,
         min deep real/bogus score
     ndethist_min int
         min number of detections >3 sigma
+    token str
+        kowalski access token
 
     Returns
     -------
@@ -87,6 +90,104 @@ def query_kowalski_cone(ra, dec, search_rad, jd_start=2458194, jd_end=2459406,
                                                          "candidate.srmag2": 1,
                                                          "candidate.distpsnr3": 1,
                                                          "candidate.sgscore3": 1,
+                                                         "candidate.srmag3": 1,
+                                                         "candidate.magpsf":1,
+                                                         "candidate.sigmapsf":1,
+                                                         "candidate.distnr":1,
+                                                         "candidate.magnr":1,
+                                                         "candidate.sigmagnr":1,
+                                                         "candidate.fid":1
+                                                         }
+                                          }
+                           }
+             },
+    "kwargs": {
+#"hint": "jd_field_rb_drb_braai_ndethhist_magpsf_isdiffpos"
+               }
+       }
+
+    response = api('POST',
+                   f'https://kowalski.caltech.edu/api/queries',
+                   data=q, token=token)
+    print(f"Using a search radius of {search_rad} arcmin")
+    if response.status_code == 200:
+        info = response.json()['data']['ZTF_alerts']['object1']
+        return info
+    else:
+        print("FAILED kowalski query!")
+        print(f'HTTP code: {response.status_code}, {response.reason}')
+        print(f'{response.content}')
+        exit()
+
+def query_kowalski_cone_nodrb(ra, dec, search_rad, jd_start=2458194, jd_end=2459406,
+                        programid_list=[1], rb_min=0.5, ndethist_min=2, token=None):
+    """
+    Cone search of ZTF alerts using Kowalski
+
+    Parameters
+    ----------
+    ra float
+        Right ascension (equatorial)
+    dec float
+        Declination (equatorial)
+    jd_start float
+        JD of the start of the search
+    jd_end float
+        JD of the end of the search
+    programid_list list of int
+        list of ZTF program IDs
+    rb_min
+        min deep real/bogus score
+    ndethist_min int
+        min number of detections >3 sigma
+    token str
+        kowalski access token
+
+    Returns
+    -------
+    info dict
+        query output
+    """
+
+    q = {
+    "query_type": "cone_search",
+    "query": {
+              "object_coordinates": {
+                                     "cone_search_radius": search_rad,
+                                     "cone_search_unit": "arcmin",
+                                     "radec": {
+                                               "object1": [
+                                                           ra,
+                                                           dec
+                                                           ]
+                                               }
+                                     },
+              "catalogs": {
+                           "ZTF_alerts": {
+                                          "filter": {'candidate.jd': {'$gt': jd_start, '$lt': jd_end},
+                                                     'candidate.rb': {'$gt': rb_min},
+                                                     'candidate.programid': {'$in': programid_list},
+                                                     'candidate.ndethist': {'$gte': ndethist_min},
+                                                     },
+                                          "projection": {
+                                                         "objectId": 1,
+                                                         "candidate.ra": 1,
+                                                         "candidate.dec": 1,
+                                                         "candidate.jd": 1,
+                                                         "candidate.drb": 1,
+                                                         "candidate.ndethist": 1,
+                                                         "candidate.jdstarthist": 1,
+                                                         "candidate.jdendhist": 1,
+                                                         "candidate.programid": 1,
+                                                         "candidate.isdiffpos": 1,
+                                                         "candidate.distpsnr1": 1,
+                                                         "candidate.sgscore1": 1,
+                                                         "candidate.srmag1": 1,
+                                                         "candidate.distpsnr2": 1,
+                                                         "candidate.sgscore2": 1,
+                                                         "candidate.srmag2": 1,
+                                                         "candidate.distpsnr3": 1,
+                                                         "candidate.sgscore3": 1,
                                                          "candidate.srmag3": 1
                                                          }
                                           }
@@ -99,8 +200,7 @@ def query_kowalski_cone(ra, dec, search_rad, jd_start=2458194, jd_end=2459406,
 
     response = api('POST',
                    f'https://kowalski.caltech.edu/api/queries',
-                   data=q)
-
+                   data=q, token=token)
     print(f"Using a search radius of {search_rad} arcmin")
     if response.status_code == 200:
         info = response.json()['data']['ZTF_alerts']['object1']
@@ -132,10 +232,10 @@ using Kowalski')
                         Example: '2017-08-18 12:00:00.0'", default=None),
     parser.add_argument('--ndethist', dest='ndethist_min', type=int,
                         required=False,
-                        help='Minimum number of detections', default=2)
+                        help='Minimum number of detections', default=1)
     parser.add_argument('--pid', dest='programid_list', nargs='+',
                         required=False,
-                        help='ZTF program IDs', default=[1,3])
+                        help='ZTF program IDs', default=[1,2,3])
     parser.add_argument('--drb', dest='drb_min', type=float,
                         required=False,
                         help='Minimum drb score', default=0.64)
@@ -176,7 +276,7 @@ using Kowalski')
     programid_list = [int(p) for p in args.programid_list]
 
     # Read the secrets
-    secrets = ascii.read('secrets.csv', format='csv')
+    secrets = ascii.read('/Users/igor/.secrets.csv', format='csv')
     username = secrets['kowalski_user'][0]
     password = secrets['kowalski_pwd'][0]
 
@@ -192,8 +292,8 @@ using Kowalski')
 
     # Query Kowalski
     info_clean = query_kowalski_cone(ra, dec, search_rad, jd_start=date_start.jd, jd_end=date_end.jd,
-                        programid_list=programid_list, drb_min=args.drb_min, ndethist_min=args.ndethist_min)
-
+                        programid_list=programid_list, drb_min=args.drb_min, ndethist_min=args.ndethist_min,
+                        token=token)
     # Object IDs
     object_ids = set([c['objectId'] for c in info_clean])
     if len(object_ids) == 0:
