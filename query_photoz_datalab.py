@@ -7,7 +7,7 @@ import astropy.units as u
 from dl import queryClient as qc
 
 def query_coords_ls(ra,dec,radius_arcsec=5,
-                         radius_nuclear=1., catalog='dr8_north', datalab=True,
+                         radius_nuclear=1., catalog='ls_dr9', datalab=True,
                          check_quality=True):
     '''Query the database to search for matches at the given coordinates'''
 
@@ -15,8 +15,8 @@ def query_coords_ls(ra,dec,radius_arcsec=5,
     if datalab is True:
         radius_deg = radius_arcsec / 3600.
         query = qc.query(sql=f"SELECT z_phot_median, z_phot_std, z_phot_l95, ra, dec, \
-                             type, flux_z from ls_dr8.photo_z INNER JOIN ls_dr8.tractor \
-                             ON ls_dr8.tractor.ls_id = ls_dr8.photo_z.ls_id \
+                             type, flux_z from {catalog}.photo_z INNER JOIN {catalog}.tractor \
+                             ON {catalog}.tractor.ls_id = {catalog}.photo_z.ls_id \
                              where 't' = Q3C_RADIAL_QUERY(ra, dec, {ra}, {dec}, {radius_deg})")
 
         result0 = query.split('\n')
