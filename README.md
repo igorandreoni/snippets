@@ -1,8 +1,8 @@
 Collection of useful astronomy snippets. All work with Python 3.
 
-## Query Legacy Survey DR8 photoz
+## Query Legacy Survey DR9 photoz
 
-Query photometric redshifts from Legacy Survey DR8<br>
+Query photometric redshifts from Legacy Survey DR9<br>
 
 ```
 usage: query_photoz_datalab.py [-h] [-r RADIUS] RA, Dec [RA, Dec ...]
