@@ -140,6 +140,17 @@ python dbsp_crop_spec.py --n ZTF19cool.fits ZTF20lesscool.fits --doPlot
 **Limitations:** Headers are not yet transferred
 
 
+## Get script to trigger ZTF forced photometry
+usage: trigger_forced_phot.py [-h] [-n NAMES [NAMES ...]] [--ra RA] [--dec DEC]<br>
+```
+Trigger Frank Masci's forced photometry service at IPAC<br>
+
+options:
+  -h, --help            show this help message and exit
+  -n NAMES [NAMES ...]  Names of the ZTF candidates; if given, the coordinates will be queried from kowalski
+  --ra RA               Right ascension (array, in degrees)
+  --dec DEC             Declination (array, in degrees)
+```
 
 ## Get galaxies
 usage: get_galaxies.py [-h] --ra RA --dec DEC [--r RAD] [--c CATALOG]<br>
