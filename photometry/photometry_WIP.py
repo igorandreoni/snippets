@@ -22,6 +22,7 @@ from astropy.nddata import NDData
 from photutils.psf import extract_stars
 from photutils import EPSFBuilder
 from photutils import find_peaks
+from photutils.centroids import centroid_com
 
 # Perform PSF photometry
 from photutils.psf import BasicPSFPhotometry
@@ -81,6 +82,7 @@ class Image:
         self.pixscale = self.header["PIXSCALE"]
         # right ascension and declination of the image center
         self.ra_center, self.dec_center = self.find_radec_center()
+        self.box = np.max([self.naxis1, self.naxis2]) * self.pixscale
 
     def find_filter(self):
         # Find the filter info from the header
@@ -198,7 +200,9 @@ class Stars:
             table with coordinates of sources in the image
         """
         # Find peaks
-        peaks_tbl = find_peaks(im.data, threshold=100.)
+
+        peaks_tbl = find_peaks(im.data, centroid_func=centroid_com,
+                               threshold=100., box_size=11)
         peaks_tbl['peak_value'].info.format = '%.8g'
         # Inverse sort by peak value
         peaks_tbl.sort('peak_value', reverse=True)
@@ -206,18 +210,23 @@ class Stars:
         peaks_tbl = peaks_tbl[peaks_tbl['peak_value'] < im.saturate]
 
         # Make it short
-        x = peaks_tbl['x_peak']
-        y = peaks_tbl['y_peak']
+        x = peaks_tbl['x_centroid']
+        y = peaks_tbl['y_centroid']
+        # Add 1 pixel to capture the center of the sources
+        #x += 1
+        #y += 1
         mask = ((x > hsize) & (x < (im.data.shape[1] -1 - hsize)) &
                 (y > hsize) & (y < (im.data.shape[0] -1 - hsize)))
         # Create source table
         s_tbl = Table()
+        # FIXME
         s_tbl['x'] = x[mask]
         s_tbl['y'] = y[mask]
+
         # WCS
         w = wcs.WCS(im.header, relax=True)
-        s_tbl['ra'] = w.pixel_to_world(s_tbl['x'], s_tbl['y']).ra.deg
-        s_tbl['dec'] = w.pixel_to_world(s_tbl['x'], s_tbl['y']).dec.deg
+        s_tbl['ra'], s_tbl['dec'] = w.all_pix2world(s_tbl['x'], s_tbl['y'], 0)
+        #s_tbl['dec'] = w.pixel_to_world(s_tbl['x'], s_tbl['y']).dec.deg
         s_tbl['peak_value'] = peaks_tbl[mask]['peak_value']
         s_tbl['name'] = [f"star_{n}" for n in np.arange(len(s_tbl))+1]
         # Select a subset of bright sources
@@ -380,18 +389,18 @@ def get_psfphot(pos, image, psf_model, size_fit=21):
                                     fitshape=(size_fit,size_fit),
                                     finder=None,
                                     aperture_radius=5)
-    result_tab = photometry(image=image.data, init_guesses=pos)
+    result = photometry(image=image.data, init_guesses=pos)
     residual_image = photometry.get_residual_image()
 
-    return result_tab
+    return result
 
 
 def doCalibrate(result_t, stars_t, filt):
     # Mask out values which will result in problematic mag
-    mask = ((result_t['flux_fit'] > 0))
+    mask = (result_t['flux_fit'] > 0)
     result_t = result_t[mask]
     stars_t = stars_t[mask]
-    mag_calib = np.array(stars_t[f'{filt}mag'])[mask]
+    mag_calib = np.array(stars_t[f'{filt}mag'])
 
     # Calibrate (remove last entry because it's the target)
     stars_t['flux'] = result_t['flux_fit']
@@ -420,13 +429,35 @@ def doCalibrate(result_t, stars_t, filt):
 
     return result_t, stars_t, diff
 
+def getPos(stars_tbl, add1=False):
+    # Create a table for the PSF photometry
+    if 'used_for_zp' in stars_tbl.colnames:
+        colnames = ["x", "y", "ra", "dec", "peak_value", "name", "rmag"]
+        p = Table([stars_tbl[cn] for cn in colnames], names=colnames)
+    else:
+        p = Table(stars_tbl, copy=True)
+    if add1 is True:
+        p["x"] = [xx + 1 for xx in p["x"]]
+        p["y"] = [xx + 1 for xx in p["y"]]
+    p.rename_column("x", "x_0")
+    p.rename_column("y", "y_0")
+    # Add flux guess
+    p["flux_0"] = stars_tbl['peak_value']
+
+    return p
+
 
 def do_forced(target, image, stars, args, use_calib_stars=False):
     # Convert ra, dec to xy
     w = wcs.WCS(image.header, relax=True)
     coords_target = SkyCoord(ra=target.ra*u.deg,
                              dec=target.dec*u.deg)
-    x_target, y_target = w.world_to_pixel(coords_target)
+    # convert to pixel, add 1 to make it right
+    x_target, y_target = w.all_world2pix(coords_target.ra, coords_target.dec, 0)
+    #import pdb
+    #pdb.set_trace()
+    #x_target += 1
+    #y_target += 1
 
     # Convert the image in NDData format
     nddata = NDData(data=image.data)
@@ -446,6 +477,8 @@ def do_forced(target, image, stars, args, use_calib_stars=False):
         filt = 'r'
     elif image.filter in ["SDSS-G", "gp", "ZTF_g"]:
         filt = 'g'
+    elif image.filter in ["SDSS-I", "ip", "ZTF_i"]:
+        filt = 'i'
  
     # Query the PS1 catalog
     index = []
@@ -468,11 +501,7 @@ def do_forced(target, image, stars, args, use_calib_stars=False):
     stars_tbl[f'{filt}mag'] = [cat[i][f"{filt}mag"] for i in idx[sep_constraint]]
 
     # Create a table for the PSF photometry
-    pos = Table(stars_tbl, copy=True)
-    pos.rename_column("x", "x_0")
-    pos.rename_column("y", "y_0")
-    # Add flux guess
-    pos["flux_0"] = stars_tbl['peak_value']
+    pos = getPos(stars_tbl, add1=True)
 
     # Get PSF photometry
     result_tbl = get_psfphot(pos, image, epsf, size_fit=args.sfp)
@@ -485,26 +514,27 @@ def do_forced(target, image, stars, args, use_calib_stars=False):
     epsf, norm = get_psf(nddata, stars_tbl[stars_tbl['used_for_zp'] == 1], size_box=args.sbp)
 
     # Select only those stars that were within the sigma clipping
-    pos = pos[stars_tbl['used_for_zp'] == 1]
+    pos = getPos(stars_tbl[stars_tbl['used_for_zp'] == 1], add1=False)
 
     # Add the target at the bottom of the table
     pos.add_row([x_target, y_target,
                  coords_target.ra.deg,
-                 coords_target.dec.deg, 99.,
-                 'target', 99., 99.])
-
+                 coords_target.dec.deg, 1000,
+                 'target', 99., 1000])
     # Perform again PSF phot
     result_tab = get_psfphot(pos, image, epsf, size_fit=args.sfp)
+    # Separate the target
+    result_tab_target = Table(result_tab[result_tab['name']=='target'], copy=True)
 
     print("SECOND PHOTOMETRY ITER OF STARS+TARGET")
     # Calibrate without the target
-    result_tab, stars_tbl, diff = doCalibrate(result_tab[:-1],
+    result_tab, stars_tbl, diff = doCalibrate(result_tab[result_tab["name"] != 'target'],
                                     stars_tbl[stars_tbl['used_for_zp'] == 1],
                                     filt)
 
     # Fix the tables by separating the target again
-    result_tab_target = Table(result_tab[-1], copy=True)
-    result_tab = Table(result_tab[:-1], copy=True)
+    ##result_tab_target = Table(result_tab[-1], copy=True)
+    #result_tab = Table(result_tab[result_tab['name']!='target'], copy=True)
 
     # Target table
     result_tab_target["mag_calib"] =  [-2.5 * np.log10(np.array(result_tab_target['flux_fit'])) + diff]
@@ -519,6 +549,8 @@ def do_forced(target, image, stars, args, use_calib_stars=False):
     plt.plot(stars_tbl[stars_tbl['used_for_zp']==1][f'{filt}mag'], np.array(stars_tbl[stars_tbl['used_for_zp']==1]['mag_calib'])-np.array(stars_tbl[stars_tbl['used_for_zp']==1][f'{filt}mag']), 'bo', label=f"{len(stars_tbl[stars_tbl['used_for_zp']==1])} stars used for zp")
     plt.plot(stars_tbl[stars_tbl['used_for_zp']==0][f'{filt}mag'], np.array(stars_tbl[stars_tbl['used_for_zp']==0]['mag_calib'])-np.array(stars_tbl[stars_tbl['used_for_zp']==0][f'{filt}mag']), 'ro', label=f"{len(stars_tbl[stars_tbl['used_for_zp']==0])} stars sigma clipped")
     plt.plot([16, 24], [0,0], 'r--')
+    plt.plot([16,24], [np.std(np.abs(stars_tbl['diff'])), np.std(np.abs(stars_tbl['diff']))], "k:")
+    plt.plot([16,24], [-1*np.std(np.abs(stars_tbl['diff'])), -1*np.std(np.abs(stars_tbl['diff']))], "k:")
     plt.legend()
     plt.xlabel("magnitude")
     plt.ylabel("measured - cataloged mag")
@@ -634,7 +666,7 @@ names starting with @", default=None)
     parser.add_argument('--box-fraction', '-bf', dest='bf', type=float,
                         required=False,
                         help="Fraction of the box side used for the \
-calibration star selection (centered on the target; the default is 10% \
+calibration star selection (centered on the target; the default is 10 percent\
 more than the side of the detector)",
                         default=1.)
     parser.add_argument('--size-box-psf', '-sbp', dest='sbp', type=int,
@@ -672,5 +704,4 @@ more than the side of the detector)",
     for filename in im_filenames:
         image = Image(filename, ext=0, satlevel=args.satlevel)
         stars = Stars(image, target, args)
-
         do_forced(target, image, stars, args, use_calib_stars=False)
