@@ -8,9 +8,6 @@ import numpy as np
 
 from penquins import Kowalski
 
-email = "<your email address>"
-userpass = "<your password>"
-
 
 def get_lightcurve_alerts_aux(token, list_names):
     """Query the light curve for a list of candidates"""
@@ -36,8 +33,7 @@ def get_lightcurve_alerts_aux(token, list_names):
         return None
     out = []
     for l in r['default']['data']:
-        with_det = list({'objectId': l['_id'], 'candidate': s} for s in \
-l['prv_candidates'] if 'magpsf' in s.keys())
+        with_det = list({'objectId': l['_id'], 'candidate': s} for s in l['prv_candidates'] if 'magpsf' in s.keys())
         out = out + with_det
 
     return out
@@ -134,6 +130,17 @@ def create_tbl_lc(light_curves, outfile=None):
     return tbl
 
 
+def writeScript(ra, dec, outname):
+    # Command
+    jdstart = Time("2018-03-17").jd
+    jdend = Time.now().jd
+    command = f"wget --http-user=ztffps --http-passwd=dontgocrazy! -O log.txt 'https://ztfweb.ipac.caltech.edu/cgi-bin/requestForcedPhotometry.cgi?ra={ra}&dec={dec}&jdstart={jdstart}&jdend={jdend}&email=igor.andreoni@unc.edu&userpass=dhrs773'"
+    print(command)
+ 
+    with open(outname, "w") as o:
+        o.write(command)
+
+
 if __name__ == "__main__":
     """Trigger Frank Masci's forced photometry service at IPAC"""
 
@@ -157,11 +164,10 @@ or --ra ra1 ra2] --dec [dec1 dec2] to trigger by coordinates]")
         exit()
 
     if args.ra is not None and args.dec is not None: 
-        if type(args.ra) != list and type(args.dec) != list:
-            ra, dec = [args.ra], [args.dec]
-        else:
-            ra, dec = args.ra, args.dec
+        ra, dec = args.ra, args.dec
         outname = f"script_ra{ra}_dec{dec}.txt"
+        writeScript(ra, dec, outname)
+        exit()
     else:
         outname = f"script_{'_'.join(args.names)}.txt"
 
@@ -195,13 +201,5 @@ or --ra ra1 ra2] --dec [dec1 dec2] to trigger by coordinates]")
     # Get coords
     ra, dec = np.median(np.array(t['ra'])), np.mean(np.array(t['dec']))
 
-    # Command
-    jdstart = Time("2018-03-17").jd
-    jdend = Time.now().jd
-    command = f"wget --http-user=ztffps --http-passwd=dontgocrazy! -O log.txt \
-'https://ztfweb.ipac.caltech.edu/cgi-bin/requestForcedPhotometry.cgi?ra={ra}&\
-dec={dec}&jdstart={jdstart}&jdend={jdend}&email={email}&userpass={userpass}'"
-    print(command)
- 
-    with open(outname, "w") as o:
-        o.write(command)
+    writeScript(ra, dec, outname)
+
