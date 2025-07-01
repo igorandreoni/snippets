@@ -7,7 +7,7 @@ import astropy.units as u
 from dl import queryClient as qc
 
 def query_coords_ls(ra,dec,radius_arcsec=5,
-                         radius_nuclear=1., catalog='ls_dr9', datalab=True,
+                         radius_nuclear=1., catalog='ls_dr10', datalab=True,
                          check_quality=True):
     '''Query the database to search for matches at the given coordinates'''
 
@@ -40,6 +40,8 @@ def query_coords_ls(ra,dec,radius_arcsec=5,
         for r in result:
             print(", ".join([str(x) for x in r]))
 
+        return result
+
 
 if __name__ == '__main__':
     import argparse
@@ -57,4 +59,4 @@ if __name__ == '__main__':
 
     # Radius
     search_rad = args.radius
-    query_coords_ls(ra, dec, radius_arcsec=search_rad)
+    query_result = query_coords_ls(ra, dec, radius_arcsec=search_rad)
